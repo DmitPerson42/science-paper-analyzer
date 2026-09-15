@@ -4,6 +4,7 @@ Parser for OpenReview.net — публичный REST API
 
 import requests
 from typing import List, Dict
+from parsers.utils import extract_year
 
 OPENREVIEW_API = "https://api.openreview.net/notes/search"
 
@@ -46,7 +47,7 @@ class OpenReviewParser:
 
             forum = note.get("forum", "")
             cdate = note.get("cdate", note.get("tcdate", 0))
-            year = str(cdate)[:4] if cdate else ""
+            year = extract_year(cdate)
 
             papers.append({
                 "id": note.get("id", ""),
