@@ -91,11 +91,13 @@ class PaperAnalyzer:
 
     def _log(self, msg):
         if self.verbose:
-            print(msg)
+            print(msg, flush=True)
 
     def collect_papers(self, query: str, max_per_source: int = 5):
         """Сбор статей из всех источников по запросу."""
         all_papers = []
+
+        self._log(f"Начинаю сбор статей по запросу: {query!r}")
 
         if _has_streamlit:
             progress_bar = st.progress(0)
