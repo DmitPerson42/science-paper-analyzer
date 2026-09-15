@@ -22,7 +22,7 @@ class CrossRefFallback:
         headers = {"User-Agent": "SciencePaperAnalyzer/1.0 (mailto:example@example.com)"}
 
         try:
-            resp = requests.get(CROSSREF_API, params=params, headers=headers, timeout=30)
+            resp = requests.get(CROSSREF_API, params=params, headers=headers, timeout=8)
             resp.raise_for_status()
         except Exception as e:
             return self._empty_result(query, str(e))
