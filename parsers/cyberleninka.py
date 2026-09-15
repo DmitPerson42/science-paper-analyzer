@@ -18,7 +18,7 @@ class CyberLeninkaParser:
 
         try:
             url = f"{CYBERLENINKA_BASE}/search?q={query}&page=1"
-            resp = requests.get(url, headers=headers, timeout=30)
+            resp = requests.get(url, headers=headers, timeout=8)
             resp.raise_for_status()
         except Exception as e:
             return self._fallback_empty(query, str(e))
