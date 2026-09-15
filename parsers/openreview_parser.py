@@ -15,12 +15,12 @@ class OpenReviewParser:
         headers = {"User-Agent": "SciencePaperAnalyzer/1.0"}
 
         try:
-            resp = requests.get(OPENREVIEW_API, params=params, headers=headers, timeout=30)
+            resp = requests.get(OPENREVIEW_API, params=params, headers=headers, timeout=8)
             resp.raise_for_status()
         except Exception:
             # fallback — поиск через другой эндпоинт
             alt_url = f"https://api.openreview.net/notes?term={query}&limit={max_results}"
-            resp = requests.get(alt_url, headers=headers, timeout=30)
+            resp = requests.get(alt_url, headers=headers, timeout=8)
             resp.raise_for_status()
 
         data = resp.json()
