@@ -6,6 +6,7 @@ import requests
 import time
 import xml.etree.ElementTree as ET
 from typing import List, Dict
+from parsers.utils import extract_year
 
 ARXIV_API = "https://export.arxiv.org/api/query"
 
@@ -58,7 +59,7 @@ class ArxivParser:
                 if name:
                     authors.append(name)
 
-            year = published[:4] if published else ""
+            year = extract_year(published)
 
             doi = ""
             for link in entry.findall("a:link", ns):
