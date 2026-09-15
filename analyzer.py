@@ -1,12 +1,32 @@
 """
 Science Paper Analyzer — центральный координатор
-Осуществляет парсинг, анализ и экспорт результатов
+Работает как с Streamlit (веб), так и без него (Colab/консоль)
 """
 
 import pandas as pd
 import time
-import streamlit as st
+import sys
 from datetime import datetime
+
+# Streamlit — опциональный импорт (нужен только для веб-режима)
+_has_streamlit = False
+try:
+    import streamlit as st
+    _has_streamlit = True
+except ImportError:
+    # Создаём заглушку для Colab/консоли
+    class _Stub:
+        def progress(self, *a, **kw):
+            return self
+        def empty(self, *a, **kw):
+            return self
+        def warning(self, msg):
+            print(f"[WARNING] {msg}")
+        def text(self, msg):
+            print(msg)
+        def __getattr__(self, name):
+            return lambda *a, **kw: None
+    st = _Stub()
 
 from parsers.arxiv_parser import ArxivParser
 from parsers.semantic_scholar import SemanticScholarParser
@@ -41,11 +61,12 @@ SOURCE_DISPLAY = {
 class PaperAnalyzer:
     """Главный класс системы."""
 
-    def __init__(self):
+    def __init__(self, verbose: bool = True):
         self.parsers = self._init_parsers()
         self.analyzers = self._init_analyzers()
         self.exporter_csv = CSVExporter()
         self.exporter_xlsx = ExcelExporter()
+        self.verbose = verbose
 
     def _init_parsers(self):
         return {
@@ -68,15 +89,28 @@ class PaperAnalyzer:
             "journal": JournalAnalyzer(),
         }
 
+    def _log(self, msg):
+        if self.verbose:
+            print(msg)
+
     def collect_papers(self, query: str, max_per_source: int = 5):
         """Сбор статей из всех источников по запросу."""
         all_papers = []
-        progress_bar = st.progress(0)
-        status_text = st.empty()
+
+        if _has_streamlit:
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+        else:
+            progress_bar = None
 
         sources = list(self.parsers.items())
         for idx, (source_key, parser) in enumerate(sources):
-            status_text.text(f"📡 Парсинг: {SOURCE_DISPLAY.get(source_key, source_key)}...")
+            src_name = SOURCE_DISPLAY.get(source_key, source_key)
+            self._log(f"[{idx+1}/{len(sources)}] Парсинг: {src_name}...")
+
+            if progress_bar is not None:
+                status_text.text(f"Парсинг: {src_name}...")
+
             try:
                 papers = parser.search(query, max_results=max_per_source)
                 for p in papers:
@@ -85,23 +119,40 @@ class PaperAnalyzer:
                     if "id" not in p or not p["id"]:
                         p["id"] = f"{source_key}_{hash(p.get('title', '')) % 100000}"
                 all_papers.extend(papers)
-                time.sleep(0.5)  # вежливая задержка
+                self._log(f"  -> Найдено: {len(papers)} статей")
+                time.sleep(0.3)
             except Exception as e:
-                st.warning(f"⚠️ {SOURCE_DISPLAY.get(source_key, source_key)}: {str(e)[:100]}")
-            progress_bar.progress((idx + 1) / len(sources))
+                msg = f"{src_name}: {str(e)[:100]}"
+                if _has_streamlit:
+                    st.warning(f"WARNING: {msg}")
+                else:
+                    self._log(f"  [WARNING] {msg}")
 
-        progress_bar.empty()
-        status_text.text(f"✅ Собрано {len(all_papers)} статей из всех источников")
+            if progress_bar is not None:
+                progress_bar.progress((idx + 1) / len(sources))
+
+        if progress_bar is not None:
+            progress_bar.empty()
+
+        self._log(f"\nСобрано {len(all_papers)} статей из всех источников")
         return all_papers
 
     def analyze_papers(self, papers: list) -> pd.DataFrame:
         """Анализ всех собранных статей."""
         results = []
-        progress_bar = st.progress(0)
-        status_text = st.empty()
+
+        if _has_streamlit:
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+        else:
+            progress_bar = None
 
         for idx, paper in enumerate(papers):
-            status_text.text(f"🔬 Анализ статьи {idx+1}/{len(papers)}: {paper.get('title', 'N/A')[:50]}...")
+            title_short = paper.get("title", "N/A")[:50]
+            self._log(f"[{idx+1}/{len(papers)}] Анализ: {title_short}...")
+
+            if progress_bar is not None:
+                status_text.text(f"Анализ статьи {idx+1}/{len(papers)}: {title_short}...")
 
             citation_score, citation_detail = self.analyzers["citation"].analyze(paper)
             text_score, text_detail = self.analyzers["text"].analyze(paper)
@@ -111,11 +162,11 @@ class PaperAnalyzer:
             avg_score = sum(scores) / len(scores)
 
             if avg_score >= 0.7:
-                verdict = "Real ✅"
+                verdict = "Real"
             elif avg_score >= 0.4:
-                verdict = "Suspicious ⚠️"
+                verdict = "Suspicious"
             else:
-                verdict = "Fake ❌"
+                verdict = "Fake"
 
             results.append({
                 "id": paper.get("id", "N/A"),
@@ -135,16 +186,21 @@ class PaperAnalyzer:
                 "journal_detail": journal_detail,
             })
 
-            progress_bar.progress((idx + 1) / len(papers))
+            if progress_bar is not None:
+                progress_bar.progress((idx + 1) / len(papers))
 
-        progress_bar.empty()
-        status_text.text(f"✅ Проанализировано {len(results)} статей")
+        if progress_bar is not None:
+            progress_bar.empty()
+
+        self._log(f"Проанализировано {len(results)} статей")
         return pd.DataFrame(results)
 
     def export_csv(self, df: pd.DataFrame, filepath: str):
         """Экспорт в CSV."""
         self.exporter_csv.export(df, filepath)
+        self._log(f"CSV сохранён: {filepath}")
 
     def export_excel(self, df: pd.DataFrame, filepath: str):
         """Экспорт в Excel с форматированием."""
         self.exporter_xlsx.export(df, filepath)
+        self._log(f"Excel сохранён: {filepath}")
