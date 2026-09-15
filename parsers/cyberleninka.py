@@ -5,6 +5,7 @@ Parser for CyberLeninka.ru — scraping HTML
 import requests
 from bs4 import BeautifulSoup
 from typing import List, Dict
+from parsers.utils import extract_year
 
 CYBERLENINKA_BASE = "https://cyberleninka.ru"
 
@@ -53,7 +54,7 @@ class CyberLeninkaParser:
                 "id": href.split("/")[-1] if href else "",
                 "title": title,
                 "authors": authors,
-                "year": year[:4] if year else "",
+                "year": extract_year(year),
                 "abstract": abstract,
                 "url": href,
                 "venue": "CyberLeninka",
