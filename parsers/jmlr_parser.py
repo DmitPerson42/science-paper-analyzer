@@ -32,7 +32,7 @@ class JMLRParser:
         headers = {"User-Agent": "SciencePaperAnalyzer/1.0"}
 
         try:
-            resp = requests.get(JMLR_URL, headers=headers, timeout=30)
+            resp = requests.get(JMLR_URL, headers=headers, timeout=8)
             resp.raise_for_status()
         except Exception:
             return self._fallback_search(query, max_results)
