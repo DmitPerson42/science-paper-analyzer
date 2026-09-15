@@ -14,7 +14,7 @@ class ACLAnthologyParser:
         headers = {"User-Agent": "SciencePaperAnalyzer/1.0"}
 
         try:
-            resp = requests.get(ACL_API, params=params, headers=headers, timeout=30)
+            resp = requests.get(ACL_API, params=params, headers=headers, timeout=8)
             resp.raise_for_status()
         except Exception:
             # fallback: direct website search
@@ -50,7 +50,7 @@ class ACLAnthologyParser:
 
         url = f"https://aclanthology.org/?q={query}"
         headers = {"User-Agent": "SciencePaperAnalyzer/1.0"}
-        resp = requests.get(url, headers=headers, timeout=30)
+        resp = requests.get(url, headers=headers, timeout=8)
         resp.raise_for_status()
 
         soup = BeautifulSoup(resp.text, "lxml")
