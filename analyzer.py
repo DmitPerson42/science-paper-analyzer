@@ -134,8 +134,21 @@ class PaperAnalyzer:
         if progress_bar is not None:
             progress_bar.empty()
 
-        self._log(f"\nСобрано {len(all_papers)} статей из всех источников")
-        return all_papers
+        # Дедупликация: удаляем статьи с одинаковым title (регистронезависимо)
+        seen = set()
+        unique_papers = []
+        for p in all_papers:
+            key = p.get("title", "").strip().lower()[:100]
+            if key and key not in seen:
+                seen.add(key)
+                unique_papers.append(p)
+
+        dupes = len(all_papers) - len(unique_papers)
+        if dupes:
+            self._log(f"Удалено дублей: {dupes}")
+
+        self._log(f"\nСобрано {len(unique_papers)} уникальных статей из всех источников")
+        return unique_papers
 
     def analyze_papers(self, papers: list) -> pd.DataFrame:
         """Анализ всех собранных статей."""
