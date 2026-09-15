@@ -3,10 +3,27 @@ Parser for JMLR.org — scraping HTML
 """
 
 import requests
+import re
 from bs4 import BeautifulSoup
 from typing import List, Dict
 
 JMLR_URL = "https://jmlr.org/papers/"
+
+
+def _jmlr_volume_to_year(href: str) -> str:
+    """Извлекает год из JMLR URL по номеру тома (v1=2000)."""
+    match = re.search(r'/v(\d+)', href)
+    if not match:
+        return ""
+    try:
+        vol = int(match.group(1))
+        # JMLR тома: v1=2000, v2=2001, ...
+        year = 2000 + vol - 1
+        if 1999 <= year <= 2030:
+            return str(year)
+    except (ValueError, IndexError):
+        pass
+    return ""
 
 
 class JMLRParser:
@@ -42,7 +59,7 @@ class JMLRParser:
                 "id": href.split("/")[-1].replace(".html", ""),
                 "title": title,
                 "authors": "",
-                "year": href.split("/v")[-1][:4] if "/v" in href else "",
+                "year": _jmlr_volume_to_year(href),
                 "abstract": "",
                 "url": href,
                 "venue": "JMLR",
@@ -63,7 +80,7 @@ class JMLRParser:
                     "id": href.split("/")[-1].replace(".html", ""),
                     "title": title or "JMLR Paper",
                     "authors": "",
-                    "year": href.split("/v")[-1][:4] if "/v" in href else "",
+                    "year": _jmlr_volume_to_year(href),
                     "abstract": "",
                     "url": href,
                     "venue": "JMLR",
