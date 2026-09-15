@@ -24,7 +24,7 @@ class ArxivParser:
         max_retries = 3
         for attempt in range(max_retries):
             try:
-                resp = requests.get(ARXIV_API, params=params, headers=headers, timeout=30)
+                resp = requests.get(ARXIV_API, params=params, headers=headers, timeout=8)
                 if resp.status_code == 429:
                     wait = (attempt + 1) * 3
                     time.sleep(wait)
