@@ -14,7 +14,7 @@ class SemanticScholarParser:
         params = {"query": query, "limit": max_results, "fields": FIELDS}
         headers = {"User-Agent": "SciencePaperAnalyzer/1.0"}
 
-        resp = requests.get(SEMANTIC_API, params=params, headers=headers, timeout=30)
+        resp = requests.get(SEMANTIC_API, params=params, headers=headers, timeout=8)
         
         if resp.status_code == 429:
             raise Exception("Rate limited. Please wait and try again.")
