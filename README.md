@@ -148,9 +148,14 @@ plotly>=5.14.0
 
 ---
 
+## 📖 Полное объяснение кода
+
+Подробный ноутбук с построчным объяснением **каждой строки каждого файла**:
+- https://colab.research.google.com/github/DmitPerson42/science-paper-analyzer/blob/main/tutorial.ipynb
+
 ## 🔗 GitHub
 
-Репозиторий: [https://github.com/ВАШ_АККАУНТ/science-paper-analyzer](https://github.com/ВАШ_АККАУНТ/science-paper-analyzer)
+Репозиторий: [https://github.com/DmitPerson42/science-paper-analyzer](https://github.com/DmitPerson42/science-paper-analyzer)
 
 ---
 
